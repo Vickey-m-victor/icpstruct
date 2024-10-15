@@ -9,6 +9,12 @@ dotenv.config({ path: '../../.env' });
 export default defineConfig({
   build: {
     emptyOutDir: true,
+    rollupOptions: {
+      external: [
+        // Add the dfx-generated module to the external array
+        'dfx-generated/my_project_backend',
+      ],
+    },
   },
   optimizeDeps: {
     esbuildOptions: {

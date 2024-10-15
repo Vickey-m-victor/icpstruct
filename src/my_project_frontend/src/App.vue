@@ -1,28 +1,41 @@
-<script setup>
-import { ref } from 'vue';
-import { my_project_backend } from 'declarations/my_project_backend/index';
-let greeting = ref('');
-
-async function handleSubmit(e) {
-  e.preventDefault();
-  const target = e.target;
-  const name = target.querySelector('#name').value;
-  await my_project_backend.greet(name).then((response) => {
-    greeting.value = response;
-  });
-}
-</script>
-
 <template>
-  <main>
-    <img src="/logo2.svg" alt="DFINITY logo" />
-    <br />
-    <br />
-    <form action="#" @submit="handleSubmit">
-      <label for="name">Enter your name: &nbsp;</label>
-      <input id="name" alt="Name" type="text" />
-      <button type="submit">Click Me!</button>
-    </form>
-    <section id="greeting">{{ greeting }}</section>
-  </main>
+  <div id="app">
+    <button @click="login">Login with Internet Identity</button>
+    <p>Your Principal: {{ principal }}</p>
+  </div>
 </template>
+
+<script>
+import { AuthClient } from '@dfinity/auth-client';
+import { Actor, HttpAgent } from '@dfinity/agent';
+
+export default {
+  data() {
+    return {
+      principal: '',
+    };
+  },
+  methods: {
+    async login() {
+      const authClient = await AuthClient.create();
+      const identity = await authClient.login({
+        identityProvider: 'http://localhost:4943/?canisterId=internet_identity',
+      });
+
+      const agent = new HttpAgent({ identity });
+
+      const { idlFactory: myProjectIdl, canisterId: myProjectId } = await this.importModules();
+
+      const myProjectActor = Actor.createActor(myProjectIdl, {
+        agent,
+        canisterId: myProjectId,
+      });
+
+      this.principal = await myProjectActor.whoami();
+    },
+    async importModules() {
+      return await import('dfx-generated/my_project_backend');
+    },
+  },
+};
+</script>
