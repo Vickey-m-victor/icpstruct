@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'url';
 import { defineConfig } from 'vite';
-import environment from 'vite-plugin-environment';
 import vue from '@vitejs/plugin-vue';
+import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '../../.env' });
@@ -11,7 +11,6 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       external: [
-        // Add the dfx-generated module to the external array
         'dfx-generated/my_project_backend',
       ],
     },
@@ -33,8 +32,9 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    environment('all', { prefix: 'CANISTER_' }),
-    environment('all', { prefix: 'DFX_' }),
+    environment({
+      prefix: 'VITE_',
+    }),
   ],
   resolve: {
     alias: [

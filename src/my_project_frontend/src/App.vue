@@ -18,20 +18,26 @@ export default {
   methods: {
     async login() {
       const authClient = await AuthClient.create();
-      const identity = await authClient.login({
-        identityProvider: 'http://localhost:4943/?canisterId=internet_identity',
+      await authClient.login({
+        identityProvider: `http://localhost:4943/?canisterId=${import.meta.env.VITE_CANISTER_ID_INTERNET_IDENTITY}`,
+        onSuccess: async () => {
+          const identity = authClient.getIdentity();
+          const agent = new HttpAgent({ identity });
+
+          const { idlFactory: myProjectIdl } = await this.importModules();
+
+          const myProjectId = import.meta.env.VITE_CANISTER_ID_MY_PROJECT_BACKEND;
+
+          const myProjectActor = Actor.createActor(myProjectIdl, {
+            agent,
+            canisterId: myProjectId,
+          });
+
+          const principal = await myProjectActor.whoami();
+          console.log('Principal:', principal); // Log the principal value to the console
+          this.principal = principal.toText();
+        },
       });
-
-      const agent = new HttpAgent({ identity });
-
-      const { idlFactory: myProjectIdl, canisterId: myProjectId } = await this.importModules();
-
-      const myProjectActor = Actor.createActor(myProjectIdl, {
-        agent,
-        canisterId: myProjectId,
-      });
-
-      this.principal = await myProjectActor.whoami();
     },
     async importModules() {
       return await import('dfx-generated/my_project_backend');
